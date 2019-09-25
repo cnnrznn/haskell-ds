@@ -1,15 +1,25 @@
+import Control.Monad
+import Data.ByteString.Char8
 import Network.Socket
+import Network.Socket.ByteString
 
-makesock = do
-             addr:_ <- getAddrInfo Nothing (Just "127.0.0.1") (Just "3333")
-             sock <- socket (addrFamily addr) (addrSocketType addr) (addrProtocol addr)
-             bind sock $ addrAddress addr
-             return sock
+sendudp m ip port =
+    do
+      addr:_ <- getAddrInfo Nothing (Just ip) (Just port)
+      sock <- socket (addrFamily addr) Datagram defaultProtocol
+      connect sock (addrAddress addr)
+      send sock (pack m)
+      close sock
 
-printsock iosock =
-    do sock <- iosock
-       name <- getSocketName sock
-       print name
+recvudp ip port =
+    do addr:_ <- getAddrInfo Nothing ip port 
+       sock <- socket (addrFamily addr) Datagram defaultProtocol
+       bind sock (addrAddress addr)
+       bytes <- recv sock 4096
+       close sock
+       return (unpack bytes)
 
-main = withSocketsDo $ printsock $ makesock
+serve = forever recvudp
+
+main = withSocketsDo $ serve
 
