@@ -1,21 +1,32 @@
+-- Author: Connor Zanin
+--
+-- Purpose: simulate a reliable, finite delay network
+--
+-- Operations:
+--   send
+--   receive
+-- 
+-- Semantics
+-- An event is defined as 'e = (p, m)' where m is a message received by p. m
+-- could be some data, or a null value. Under the classical model, the network
+-- is only allowed to return the null value a finite number of times to p while
+-- there is a non-null value present in the network.
+
 data Event = Event { ident :: Int,
-                     msg :: String
+                     msg :: Maybe String
                    } deriving(Eq, Show)
 
--- Place an event in the ether
 send :: [Event] -> Event -> [Event]
 send ls e = ls ++ [e]
 
-headornah [] = Nothing
-headornah (x:xs) = Just x
+headornah :: Int -> [Event] -> Event
+headornah p [] = Event { ident = p, msg = Nothing }
+headornah p (x:xs) = Event { ident = p, msg = msg x }
 
--- Remove a message for process p from the ether
--- Messages are FIFO for a process p
--- TODO consider selecting a message for p at random
--- TODO make this shit safe
-receive :: Int -> [Event] -> (Maybe Event, [Event])
+receive :: Int -> [Event] -> (Event, [Event])
 receive p ls =
     let forp = filter (\x -> ident x == p) ls
-        event = headornah forp
-        newls = filter (\x -> Just x /= event) ls
+        event = headornah p forp
+        newls = filter (/= event) ls
     in (event, newls)
+
