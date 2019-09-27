@@ -17,5 +17,5 @@ receive :: Int -> [Event] -> (Maybe Event, [Event])
 receive p ls =
     let forp = filter (\x -> ident x == p) ls
         event = headornah forp
-        newls = filter (/= event) ls
+        newls = filter (\x -> Just x /= event) ls
     in (event, newls)
